@@ -1,0 +1,30 @@
+.zm-sign {
+  height: 100%;
+  padding: 15px;
+  position: relative;
+  .zm-sign-handle {
+    padding: 10px;
+    text-align: center;
+  }
+  .zm-buttom {
+    line-height: 1;
+    background: #fff;
+    border: 1px solid #dcdfe6;
+    color: #606266;
+    cursor: pointer;
+    box-sizing: border-box;
+    outline: none;
+    user-select: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 4px;
+    & + .zm-buttom{
+      margin-left: 10px;
+    }
+    &.zm-button--mini {
+      padding: 7px 15px;
+      font-size: 12px;
+      border-radius: 3px;
+    }
+  }
+}

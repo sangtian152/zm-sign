@@ -1,24 +1,28 @@
-# zm-sign
+# zm-tree-org
 
-## Project setup
-```
-yarn install
-```
+## 介绍
+一个简易签名组件，基于vue和canvas。
 
-### Compiles and hot-reloads for development
+### 安装
 ```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
+npm install zm-sign --save
+# or 
+yarn add zm-sign
 ```
 
-### Lints and fixes files
+### 引入
 ```
-yarn lint
+import Vue from 'vue';
+import ZmSign from 'zm-sign';
+import "zm-sign/lib/zm-sign.css";
+
+Vue.use(ZmSign);
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### 最新版本
+
+[![NPM version](https://img.shields.io/npm/v/zm-sign)](https://www.npmjs.com/package/zm-sign)
+
+### 文档
+
+[说明文档](https://sangtian152.gitee.io/zm-sign/).

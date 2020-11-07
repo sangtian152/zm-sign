@@ -24,13 +24,13 @@ yarn add zm-sign
 
 ```javascript
 import Vue from 'vue';
-import ZmSign from 'zm-tree-org';
-import "zm-sign/lib/zm-tree-org.css";
+import ZmSign from 'zm-sign';
+import "zm-sign/lib/zm-sign.css";
 
 Vue.use(ZmSign);
 ```
 
 ### 最新版本
 
-[![NPM version](https://img.shields.io/npm/v/zm-tree-org)](https://www.npmjs.com/package/zm-tree-org)
+[![NPM version](https://img.shields.io/npm/v/zm-sign)](https://www.npmjs.com/package/zm-sign)
 

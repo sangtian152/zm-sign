@@ -6,7 +6,7 @@ function resolve(dir) {
 
 module.exports = {
   publicPath: "",
-  outputDir: "dist",
+  outputDir: "docs",
   assetsDir: "static",
   // 将entry指向examples
   pages: {

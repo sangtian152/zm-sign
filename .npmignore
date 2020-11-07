@@ -2,7 +2,7 @@ examples/
 src/
 public/
 demo/
-dist/
+docs/
 md-loader/
 .gitee/
 vue.config.js

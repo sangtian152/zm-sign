@@ -5,7 +5,7 @@
 ## 安装
 
     
-`@1.0.0` 表示版本号，建议锁定版本号来保证代码的稳定性
+`@1.0.1` 表示版本号，建议锁定版本号来保证代码的稳定性
 
 ### npm 安装
 
@@ -33,4 +33,3 @@ Vue.use(ZmSign);
 ### 最新版本
 
 [![NPM version](https://img.shields.io/npm/v/zm-sign)](https://www.npmjs.com/package/zm-sign)
-

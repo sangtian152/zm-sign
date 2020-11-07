@@ -1,6 +1,6 @@
 {
   "name": "zm-sign",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "zzh",
   "private": false,
   "main": "lib/zm-sign.common.js",
@@ -13,10 +13,8 @@
     "url": "https://gitee.com/sangtian152/zm-sign.git"
   },
   "keywords": [
-    "zm-tree-org",
-    "orgchart",
+    "canvas",
     "vue",
-    "tree-org",
     "components"
   ],
   "scripts": {

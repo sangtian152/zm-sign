@@ -9,6 +9,11 @@
       "name": "demo",
       "path": "/demo",
       "desc": "示例"
+    },
+    {
+      "name": "mobile",
+      "path": "/mobile",
+      "desc": "移动端示例"
     }
   ]
 }

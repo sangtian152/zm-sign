@@ -23,7 +23,7 @@
     </div>
   </div>
 </template>
-<script>
+<script type="text/babel">
 export default {
   name: "ZmSign",
   props: {
@@ -329,8 +329,8 @@ export default {
       if (flag) {
         this.createImage().then(res => {
           this.ImgSrc = res;
+          this.$emit("on-done", this.ImgSrc);
         });
-        this.$emit("on-done", this.ImgSrc);
       }
     },
     clear() {

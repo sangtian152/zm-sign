@@ -22,7 +22,7 @@
     <Button @click="done">完成</Button>
   </div>
 </template>
-<script>
+<script type="text/babel">
     export default {
       data(){
         return {

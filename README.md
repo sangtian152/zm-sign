@@ -1,4 +1,4 @@
-# zm-tree-org
+# zm-sign
 
 ## 介绍
 一个简易签名组件，基于vue和canvas。

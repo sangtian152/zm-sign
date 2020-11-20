@@ -22,20 +22,15 @@
     <Button @click="done">完成</Button>
   </div>
 </template>
-<script type="text/babel">
+<script>
     export default {
-      data(){
-        return {
-        } 
-      },
-      created(){
-      }, 
       methods:{
         async done(){
           let res = await this.$refs.sign.done();
           console.log(res)
         },
         clear(){
+          console.log("clear", this.$refs.sign)
           this.$refs.sign.clear();
         },
         handleClear(){

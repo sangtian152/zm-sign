@@ -2,7 +2,7 @@ const { compileTemplate } = require('@vue/component-compiler-utils')
 const compiler = require('vue-template-compiler')
 
 function stripScript (content) {
-  const result = content.match(/<(script)>([\s\S]+)<\/\1>/)
+  const result = content.match(/<(script[\s\S]?)>([\s\S]+)<\/\1>/)
   return result && result[2] ? result[2].trim() : ''
 }
 

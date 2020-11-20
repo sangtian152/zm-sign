@@ -1,5 +1,8 @@
 <template>
   <div class="zm-sign" ref="canvasHW">
+    <div v-if="erasable" class="zm-sign-tool">
+      <span :class="['iconfont','icon-eraser', {'active': clip}]" @click="getClip"></span>
+    </div>
     <div class="can_vans">
       <canvas
         ref="canvasF"
@@ -16,9 +19,6 @@
     <div v-if="footer" class="zm-sign-handle">
       <button class="zm-buttom zm-button--mini" @click="handleClear">
         清空
-      </button>
-      <button class="zm-buttom zm-button--mini" @click="getClip">
-        橡皮擦
       </button>
       <button class="zm-buttom zm-button--mini" @click="handleDone">
         完成
@@ -137,7 +137,7 @@ export default {
     },
     horizontalCanvas(width, height) {
       this.w = width - 40;
-      this.h = height - 90;
+      this.h = height - 120;
     },
     mouseDown(ev) {
       ev = ev || event;
@@ -394,7 +394,8 @@ export default {
   }
 };
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
+
 .can_vans {
   position: relative;
   border: 1px solid #ddd;

@@ -1,18 +1,27 @@
 export default {
+  props:{
+    erasable: {
+      type: Boolean,
+      default: true
+    },
+    eraserRadius:{
+      type: Number,
+      default: 6
+    }
+  },
   data(){
     return {
       canvas: null,
       ctx: null,
       clipX: "",
       clipY: "",
-      a: 6,
       timeout: null,
-      totimes: 100,
-      distance: 12
+      
     }
   },
   methods:{
     initClip(canvas){
+      if (!this.erasable) return;
       this.canvas = canvas;
       this.ctx = canvas.getContext("2d");
       this.tapClip();
@@ -44,9 +53,8 @@ export default {
       const { ctx } = this;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.lineWidth = this.a * 2;
+      ctx.lineWidth = this.eraserRadius * 2;
       ctx.globalCompositeOperation = "destination-out";
-      
       this.canvas.addEventListener(tapstart, this.tapdownHandler, { passive: false })
     },
     tapdownHandler(e){
@@ -58,6 +66,7 @@ export default {
         tapend = hastouch ? "touchend" : "mouseup";
       let area;
       let x2,y2;
+      const distance = 3;
       const { canvas, ctx } = this;
       area = _this.getClipArea(e, hastouch);
       this.clipX = area.x;
@@ -69,21 +78,20 @@ export default {
 
       canvas.addEventListener(tapend, function () {
         canvas.removeEventListener(tapmove, tapmoveHandler, { passive: false });
-
         //检测擦除状态
         _this.timeout = setTimeout(function () {
-          var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          var dd = 0;
-          for (var x = 0; x < imgData.width; x += _this.distance) {
-            for (var y = 0; y < imgData.height; y += _this.distance) {
-              var i = (y * imgData.width + x) * 4;
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          let dd = 0;
+          for (let x = 0; x < imgData.width; x += distance) {
+            for (let y = 0; y < imgData.height; y += distance) {
+              let i = (y * imgData.width + x) * 4;
               if (imgData.data[i + 3] > 0) { dd++ }
             }
           }
-          if (dd / (imgData.width * imgData.height / (_this.distance * _this.distance)) < 0.4) {
+          if (dd / (imgData.width * imgData.height / (distance * distance)) < 0.4) {
             canvas.className = "noOp";
           }
-        }, _this.totimes)
+        }, 100)
       });
 
       function tapmoveHandler(e) {
@@ -105,7 +113,7 @@ export default {
       ctx.save();
       ctx.beginPath();
       if(arguments.length==2){
-        ctx.arc(clipX, clipY, this.a, 0, 2 * Math.PI);
+        ctx.arc(clipX, clipY, this.eraserRadius, 0, 2 * Math.PI);
         ctx.fill();
       }else {
         ctx.moveTo(clipX, clipY);

@@ -17,6 +17,9 @@
       <button class="zm-buttom zm-button--mini" @click="handleClear">
         清空
       </button>
+      <button class="zm-buttom zm-button--mini" @click="getClip">
+        橡皮擦
+      </button>
       <button class="zm-buttom zm-button--mini" @click="handleDone">
         完成
       </button>
@@ -24,8 +27,10 @@
   </div>
 </template>
 <script type="text/babel">
+import clip from "./clip"
 export default {
   name: "ZmSign",
+  mixins:[clip],
   props: {
     color: {
       type: String,
@@ -68,7 +73,8 @@ export default {
       endX: 0,
       isDraw: false, //签名标记
       hasDrew: false,
-      isVertical: false
+      isVertical: false,
+      clip: false,
     };
   },
   watch: {
@@ -98,6 +104,16 @@ export default {
     window.removeEventListener(evt, this.resizeRender, false);
   },
   methods: {
+    getClip(){
+      this.clip = !this.clip;
+      let canvas = this.$refs.canvasF;
+      if (this.clip) {
+        this.initClip(canvas)
+      } else {
+        this.removeClip(canvas)
+      }
+      
+    },
     resizeRender(init) {
       const orientation = window.orientation;
       const isVertical = orientation == 0 || orientation == 180;
@@ -143,9 +159,16 @@ export default {
       if (ev.touches.length == 1) {
         const ele = ev.targetTouches[0];
         this.isDraw = true; //签名标记
+        let ndom = ele.target;
+        let offsetLeft = 0, offsetTop = 0;
+        while(ndom.tagName!=="BODY"){
+          offsetLeft += ndom.offsetLeft;
+          offsetTop += ndom.offsetTop;
+          ndom = ndom.offsetParent;
+        }
         let obj = {
-          x: ele.clientX - ele.target.offsetLeft,
-          y: ele.clientY - ele.target.offsetTop
+          x: ele.clientX - offsetLeft,
+          y: ele.clientY - offsetTop
         };
         this.drawStart(obj);
       }
@@ -170,9 +193,16 @@ export default {
       }
       if (ev.touches.length == 1) {
         const ele = ev.targetTouches[0];
+        let ndom = ele.target;
+        let offsetLeft = 0, offsetTop = 0;
+        while(ndom.tagName!=="BODY"){
+          offsetLeft += ndom.offsetLeft;
+          offsetTop += ndom.offsetTop;
+          ndom = ndom.offsetParent;
+        }
         let obj = {
-          x: ele.clientX - ele.target.offsetLeft,
-          y: ele.clientY - ele.target.offsetTop
+          x: ele.clientX - offsetLeft,
+          y: ele.clientY - offsetTop
         };
         this.drawMove(obj);
       }
@@ -196,35 +226,45 @@ export default {
       }
       if (ev.touches.length == 1) {
         const ele = ev.targetTouches[0];
+        let ndom = ele.target;
+        let offsetLeft = 0, offsetTop = 0;
+        while(ndom.tagName!=="BODY"){
+          offsetLeft += ndom.offsetLeft;
+          offsetTop += ndom.offsetTop;
+          ndom = ndom.offsetParent;
+        }
         let obj = {
-          x: ele.clientX - ele.target.offsetLeft,
-          y: ele.clientY - ele.target.offsetTop
+          x: ele.clientX - offsetLeft,
+          y: ele.clientY - offsetTop
         };
         this.drawEnd(obj);
       }
     },
     // 绘制
     drawStart(obj) {
+      if(this.clip) return;
       this.hasDrew = true;
       this.startX = obj.x;
       this.startY = obj.y;
       const { canvas2d } = this;
+      canvas2d.globalCompositeOperation = "source-over";
       canvas2d.beginPath();
       canvas2d.moveTo(this.startX, this.startY);
       canvas2d.lineTo(obj.x, obj.y);
       canvas2d.lineCap = "round";
       canvas2d.lineJoin = "round";
+      canvas2d.strokeStyle = this.lineColor;
       canvas2d.lineWidth = this.lineWidth;
       canvas2d.stroke();
       canvas2d.closePath();
       this.points.push(obj);
     },
     drawMove(obj) {
+      if(this.clip) return;
       const { canvas2d } = this;
       canvas2d.beginPath();
       canvas2d.moveTo(this.startX, this.startY);
       canvas2d.lineTo(obj.x, obj.y);
-      canvas2d.strokeStyle = this.lineColor;
       canvas2d.lineWidth = this.lineWidth;
       canvas2d.lineCap = "round";
       canvas2d.lineJoin = "round";
@@ -235,6 +275,7 @@ export default {
       this.points.push(obj);
     },
     drawEnd(obj) {
+      if(this.clip) return;
       const { canvas2d } = this;
       canvas2d.beginPath();
       canvas2d.moveTo(this.startX, this.startY);
@@ -355,6 +396,7 @@ export default {
 </script>
 <style lang="scss">
 .can_vans {
+  position: relative;
   border: 1px solid #ddd;
   padding: 3px;
   canvas {

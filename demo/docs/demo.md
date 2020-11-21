@@ -10,7 +10,7 @@
   <div style="height: 420px; text-align:center;">
     <zm-sign
      ref="sign"
-     color="#409EFF"
+     line-color="#409EFF"
      :line-width="4"
      :canvas-width="692"
      :canvas-height="350"

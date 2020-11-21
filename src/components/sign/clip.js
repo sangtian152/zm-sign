@@ -11,34 +11,37 @@ export default {
   },
   data(){
     return {
-      canvas: null,
+      clipCanvas: null,
       ctx: null,
       clipX: "",
       clipY: "",
       timeout: null,
-      
     }
   },
   methods:{
     initClip(canvas){
       if (!this.erasable) return;
-      this.canvas = canvas;
+      this.clipCanvas = canvas;
       this.ctx = canvas.getContext("2d");
       this.tapClip();
     },
     removeClip(canvas){
+      this.clipCanvas = null;
       const hastouch = "ontouchstart" in window ? true : false;
       const tapstart = hastouch ? "touchstart" : "mousedown";
+      canvas.getContext("2d").globalCompositeOperation = "source-over";
       canvas.removeEventListener(tapstart, this.tapdownHandler)
     },
     getClipArea(e, hastouch){
-      let x = hastouch ? e.targetTouches[0].pageX : e.clientX;
-		  let y = hastouch ? e.targetTouches[0].pageY : e.clientY;
-      let ndom = this.canvas;
-      while(ndom.tagName!=="BODY"){
-        x -= ndom.offsetLeft;
-        y -= ndom.offsetTop;
-        ndom = ndom.offsetParent;
+      let x = hastouch ? e.targetTouches[0].pageX : e.offsetX;
+		  let y = hastouch ? e.targetTouches[0].pageY : e.offsetY;
+      if (hastouch) {
+        let ndom = this.clipCanvas;
+        while(ndom.tagName!=="BODY"){
+          x -= ndom.offsetLeft;
+          y -= ndom.offsetTop;
+          ndom = ndom.offsetParent;
+        }
       }
       return {
         x: x,
@@ -55,7 +58,7 @@ export default {
       ctx.lineJoin = "round";
       ctx.lineWidth = this.eraserRadius * 2;
       ctx.globalCompositeOperation = "destination-out";
-      this.canvas.addEventListener(tapstart, this.tapdownHandler, { passive: false })
+      this.clipCanvas.addEventListener(tapstart, this.tapdownHandler, { passive: false })
     },
     tapdownHandler(e){
       e.preventDefault();
@@ -67,20 +70,20 @@ export default {
       let area;
       let x2,y2;
       const distance = 3;
-      const { canvas, ctx } = this;
+      const { clipCanvas, ctx } = this;
       area = _this.getClipArea(e, hastouch);
       this.clipX = area.x;
       this.clipY = area.y;
 
       this.drawLine(_this.clipX, _this.clipY);
 
-      canvas.addEventListener(tapmove, tapmoveHandler, { passive: false });
+      clipCanvas.addEventListener(tapmove, tapmoveHandler, { passive: false });
 
-      canvas.addEventListener(tapend, function () {
-        canvas.removeEventListener(tapmove, tapmoveHandler, { passive: false });
+      clipCanvas.addEventListener(tapend, function () {
+        clipCanvas.removeEventListener(tapmove, tapmoveHandler, { passive: false });
         //检测擦除状态
         _this.timeout = setTimeout(function () {
-          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const imgData = ctx.getImageData(0, 0, clipCanvas.width, clipCanvas.height);
           let dd = 0;
           for (let x = 0; x < imgData.width; x += distance) {
             for (let y = 0; y < imgData.height; y += distance) {
@@ -89,7 +92,7 @@ export default {
             }
           }
           if (dd / (imgData.width * imgData.height / (distance * distance)) < 0.4) {
-            canvas.className = "noOp";
+            clipCanvas.className = "noOp";
           }
         }, 100)
       });

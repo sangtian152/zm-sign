@@ -49,7 +49,7 @@
 
 | 参数      | 说明    | 类型      | 可选值       | 默认值   |
 |---------- |-------- |---------- |-------------  |-------- |
-| color     | 签名颜色   | String  |  —   |   #000000   |
+| line-color     | 签名颜色   | String  |  —   |   #000000   |
 | line-width    | 线条宽度   | Number  |  —   |  3  |
 | canvas-width    | 画布宽度   | Number  |  —   |  —  |
 | canvas-height   | 画布高度   | Number  |  —   |  —  |

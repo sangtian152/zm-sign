@@ -165,6 +165,9 @@ export default {
     },
     // 绘制
     drawStart(event) {
+      if(event.cancelable){
+        event.preventDefault();
+      }
       if(this.clip) return;
       const obj = this.getPoiner(event);
       this.isDraw = true;
@@ -188,6 +191,9 @@ export default {
       canvas.addEventListener(tapend, this.drawEnd, { passive: false });
     },
     drawMove(event) {
+      if(event.cancelable){
+        event.preventDefault();
+      }
       if(this.clip || !this.isDraw) return;
       const obj = this.getPoiner(event);
       const { canvasTxt } = this;
@@ -204,6 +210,9 @@ export default {
       this.points.push(obj);
     },
     drawEnd(event) {
+      if(event.cancelable){
+        event.preventDefault();
+      }
       if(this.clip) return;
       const obj = this.getPoiner(event)
       const { canvas, canvasTxt } = this;

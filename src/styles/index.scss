@@ -1,3 +1,4 @@
+@import url("//at.alicdn.com/t/font_2218924_lmzbr65lqh.css");
 body{
   margin: 0;
   padding: 0;
@@ -5,6 +6,16 @@ body{
 .zm-sign {
   padding: 15px;
   position: relative;
+  .zm-sign-tool {
+   text-align: right;
+   .iconfont {
+      cursor: pointer;
+      font-size:18px;
+      &.active {
+        color: #409eff;
+      }
+   }
+  }
   .zm-sign-handle {
     padding: 10px;
     text-align: center;

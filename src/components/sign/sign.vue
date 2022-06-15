@@ -1,16 +1,13 @@
 <template>
-  <div class="zm-sign" ref="canvasHW">
+  <div class="zm-sign">
+    <div v-if="erasable" class="zm-sign-tool">
+      <span :class="['iconfont','icon-eraser', {'active': clip}]" @click="doErase(!clip)"></span>
+    </div>
     <div class="can_vans">
       <canvas
         ref="canvasF"
         :width="canvasWidth ? canvasWidth : w"
         :height="canvasHeight ? canvasHeight : h"
-        @touchstart="touchStart"
-        @touchmove="touchMove"
-        @touchend="touchEnd"
-        @mousedown="mouseDown"
-        @mousemove="mouseMove"
-        @mouseup="mouseUp"
       ></canvas>
     </div>
     <div v-if="footer" class="zm-sign-handle">
@@ -24,15 +21,17 @@
   </div>
 </template>
 <script type="text/babel">
+import clip from "./clip"
 export default {
   name: "ZmSign",
+  mixins:[clip],
   props: {
-    color: {
+    canvasWidth: Number,
+    canvasHeight: Number,
+    lineColor: {
       type: String,
       default: "#000"
     },
-    canvasWidth: Number,
-    canvasHeight: Number,
     lineWidth: {
       type: Number,
       default: 3
@@ -59,7 +58,7 @@ export default {
     return {
       ImgSrc: "",
       points: [],
-      canvas2d: null,
+      canvasTxt: null,
       w: "",
       h: "",
       startX: 0,
@@ -68,7 +67,8 @@ export default {
       endX: 0,
       isDraw: false, //签名标记
       hasDrew: false,
-      isVertical: false
+      isVertical: false,
+      clip: false,
     };
   },
   watch: {
@@ -81,23 +81,35 @@ export default {
   },
   mounted() {
     let canvas = this.$refs.canvasF;
+    this.canvas = canvas;
     canvas.style.background = this.bgColor;
-    this.canvas2d = canvas.getContext("2d");
-    this.canvas2d.strokeStyle = this.color;
-    this.canvas2d.lineWidth = this.lineWidth;
+    this.canvasTxt = canvas.getContext("2d");
     this.resizeRender(true);
     // 在画板以外松开鼠标后冻结画笔
     document.onmouseup = () => {
       this.isDraw = false;
     };
+    const { tapstart, tapend } = this.touchEvent();
+    document.addEventListener(tapend, this.closure);
+    canvas.addEventListener(tapstart, this.drawStart, { passive: false });
     var evt = "onorientationchange" in window ? "orientationchange" : "resize";
     window.addEventListener(evt, this.resizeRender, false);
   },
   beforeDestoryed() {
+    const { tapend } = this.touchEvent();
+    document.removeEventListener(tapend, this.closure)
     var evt = "onorientationchange" in window ? "orientationchange" : "resize";
     window.removeEventListener(evt, this.resizeRender, false);
   },
   methods: {
+    doErase(bool){
+      this.clip = bool;
+      if (this.clip) {
+        this.initClip(this.canvas)
+      } else {
+        this.removeClip(this.canvas)
+      }
+    },
     resizeRender(init) {
       const orientation = window.orientation;
       const isVertical = orientation == 0 || orientation == 180;
@@ -121,130 +133,105 @@ export default {
     },
     horizontalCanvas(width, height) {
       this.w = width - 40;
-      this.h = height - 90;
+      this.h = height - 120;
     },
-    mouseDown(ev) {
-      ev = ev || event;
-      if (ev.cancelable) {
-        ev.preventDefault();
-      }
-      let obj = {
-        x: ev.offsetX,
-        y: ev.offsetY
-      };
-      this.drawStart(obj);
-      this.isDraw = true;
-    },
-    touchStart(ev) {
-      ev = ev || event;
-      if (ev.cancelable) {
-        ev.preventDefault();
-      }
-      if (ev.touches.length == 1) {
-        const ele = ev.targetTouches[0];
-        this.isDraw = true; //签名标记
-        let obj = {
-          x: ele.clientX - ele.target.offsetLeft,
-          y: ele.clientY - ele.target.offsetTop
-        };
-        this.drawStart(obj);
+    touchEvent(){
+      const hastouch = "ontouchstart" in window ? true : false;
+      const tapstart = hastouch ? "touchstart" : "mousedown",
+        tapmove = hastouch ? "touchmove" : "mousemove",
+        tapend = hastouch ? "touchend" : "mouseup";
+      return {
+        tapstart,
+        tapmove,
+        tapend
       }
     },
-    mouseMove(ev) {
-      ev = ev || event;
-      if (ev.cancelable) {
-        ev.preventDefault();
+    getPoiner(e){
+      const hastouch = "ontouchstart" in window ? true : false;
+      console.log(e);
+      let x = hastouch ? e.targetTouches[0].pageX : e.offsetX;
+		  let y = hastouch ? e.targetTouches[0].pageY : e.offsetY;
+      if (hastouch) {
+        let ndom = this.canvas;
+        while(ndom.tagName!=="BODY"){
+          x -= ndom.offsetLeft;
+          y -= ndom.offsetTop;
+          ndom = ndom.offsetParent;
+        }
       }
-      if (this.isDraw) {
-        let obj = {
-          x: ev.offsetX,
-          y: ev.offsetY
-        };
-        this.drawMove(obj);
-      }
-    },
-    touchMove(ev) {
-      ev = ev || event;
-      if (ev.cancelable) {
-        ev.preventDefault();
-      }
-      if (ev.touches.length == 1) {
-        const ele = ev.targetTouches[0];
-        let obj = {
-          x: ele.clientX - ele.target.offsetLeft,
-          y: ele.clientY - ele.target.offsetTop
-        };
-        this.drawMove(obj);
-      }
-    },
-    mouseUp(ev) {
-      ev = ev || event;
-      if (ev.cancelable) {
-        ev.preventDefault();
-      }
-      let obj = {
-        x: ev.offsetX,
-        y: ev.offsetY
-      };
-      this.drawEnd(obj);
-      this.isDraw = false;
-    },
-    touchEnd(ev) {
-      ev = ev || event;
-      if (ev.cancelable) {
-        ev.preventDefault();
-      }
-      if (ev.touches.length == 1) {
-        const ele = ev.targetTouches[0];
-        let obj = {
-          x: ele.clientX - ele.target.offsetLeft,
-          y: ele.clientY - ele.target.offsetTop
-        };
-        this.drawEnd(obj);
+      return {
+        x: x,
+        y: y
       }
     },
     // 绘制
-    drawStart(obj) {
+    drawStart(event) {
+      if(event.cancelable){
+        event.preventDefault();
+      }
+      if(this.clip) return;
+      const obj = this.getPoiner(event);
+      this.isDraw = true;
       this.hasDrew = true;
       this.startX = obj.x;
       this.startY = obj.y;
-      const { canvas2d } = this;
-      canvas2d.beginPath();
-      canvas2d.moveTo(this.startX, this.startY);
-      canvas2d.lineTo(obj.x, obj.y);
-      canvas2d.lineCap = "round";
-      canvas2d.lineJoin = "round";
-      canvas2d.lineWidth = this.lineWidth;
-      canvas2d.stroke();
-      canvas2d.closePath();
+      const { canvas, canvasTxt } = this;
+      canvasTxt.globalCompositeOperation = "source-over";
+      canvasTxt.beginPath();
+      canvasTxt.moveTo(this.startX, this.startY);
+      canvasTxt.lineTo(obj.x, obj.y);
+      canvasTxt.lineCap = "round";
+      canvasTxt.lineJoin = "round";
+      canvasTxt.strokeStyle = this.lineColor;
+      canvasTxt.lineWidth = this.lineWidth;
+      canvasTxt.stroke();
+      canvasTxt.closePath();
       this.points.push(obj);
+      const { tapmove, tapend } = this.touchEvent();
+      canvas.addEventListener(tapmove, this.drawMove, { passive: false });
+      canvas.addEventListener(tapend, this.drawEnd, { passive: false });
     },
-    drawMove(obj) {
-      const { canvas2d } = this;
-      canvas2d.beginPath();
-      canvas2d.moveTo(this.startX, this.startY);
-      canvas2d.lineTo(obj.x, obj.y);
-      canvas2d.strokeStyle = this.lineColor;
-      canvas2d.lineWidth = this.lineWidth;
-      canvas2d.lineCap = "round";
-      canvas2d.lineJoin = "round";
-      canvas2d.stroke();
-      canvas2d.closePath();
+    drawMove(event) {
+      if(event.cancelable){
+        event.preventDefault();
+      }
+      if(this.clip || !this.isDraw) return;
+      const obj = this.getPoiner(event);
+      const { canvasTxt } = this;
+      canvasTxt.beginPath();
+      canvasTxt.moveTo(this.startX, this.startY);
+      canvasTxt.lineTo(obj.x, obj.y);
+      canvasTxt.lineWidth = this.lineWidth;
+      canvasTxt.lineCap = "round";
+      canvasTxt.lineJoin = "round";
+      canvasTxt.stroke();
+      canvasTxt.closePath();
       this.startY = obj.y;
       this.startX = obj.x;
       this.points.push(obj);
     },
-    drawEnd(obj) {
-      const { canvas2d } = this;
-      canvas2d.beginPath();
-      canvas2d.moveTo(this.startX, this.startY);
-      canvas2d.lineTo(obj.x, obj.y);
-      canvas2d.lineCap = "round";
-      canvas2d.lineJoin = "round";
-      canvas2d.stroke();
-      canvas2d.closePath();
+    drawEnd(event) {
+      if(event.cancelable){
+        event.preventDefault();
+      }
+      if(this.clip) return;
+      const obj = this.getPoiner(event)
+      const { canvas, canvasTxt } = this;
+      canvasTxt.beginPath();
+      canvasTxt.moveTo(this.startX, this.startY);
+      canvasTxt.lineTo(obj.x, obj.y);
+      canvasTxt.lineCap = "round";
+      canvasTxt.lineJoin = "round";
+      canvasTxt.stroke();
+      canvasTxt.closePath();
       this.points.push(obj);
       this.points.push({ x: -1, y: -1 });
+      const { tapmove, tapend } = this.touchEvent();
+      canvas.removeEventListener(tapmove, this.drawMove);
+      canvas.removeEventListener(tapend, this.drawEnd);
+    },
+    closure(){
+      this.isDraw = false;
     },
     // 创建图片
     createImage() {
@@ -254,27 +241,27 @@ export default {
           return;
         }
         const canvas = this.$refs.canvasF;
-        const { canvas2d } = this;
-        const ImgData = canvas2d.getImageData(
+        const { canvasTxt } = this;
+        const ImgData = canvasTxt.getImageData(
           0,
           0,
           canvas.width,
           canvas.height
         );
-        canvas2d.globalCompositeOperation = "destination-over";
-        canvas2d.fillStyle = this.bgColor;
-        canvas2d.fillRect(0, 0, canvas.width, canvas.height);
+        canvasTxt.globalCompositeOperation = "destination-over";
+        canvasTxt.fillStyle = this.bgColor;
+        canvasTxt.fillRect(0, 0, canvas.width, canvas.height);
         let resultImg = canvas.toDataURL();
-        canvas2d.clearRect(0, 0, canvas.width, canvas.height);
-        canvas2d.putImageData(ImgData, 0, 0);
-        canvas2d.globalCompositeOperation = "source-over";
+        canvasTxt.clearRect(0, 0, canvas.width, canvas.height);
+        canvasTxt.putImageData(ImgData, 0, 0);
+        canvasTxt.globalCompositeOperation = "source-over";
         if (this.crop) {
           const crop_area = this.getCropArea(ImgData.data);
           var crop_canvas = document.createElement("canvas");
           const crop_ctx = crop_canvas.getContext("2d");
           crop_canvas.width = crop_area[2] - crop_area[0];
           crop_canvas.height = crop_area[3] - crop_area[1];
-          const crop_imgData = canvas2d.getImageData(...crop_area);
+          const crop_imgData = canvasTxt.getImageData(...crop_area);
           crop_ctx.globalCompositeOperation = "destination-over";
           crop_ctx.putImageData(crop_imgData, 0, 0);
           crop_ctx.fillStyle = this.imgBgColor;
@@ -282,6 +269,7 @@ export default {
           resultImg = crop_canvas.toDataURL();
           crop_canvas = null;
         }
+        this.doErase(this.clip);
         resolve(resultImg);
       });
       return pm;
@@ -335,8 +323,9 @@ export default {
     },
     clear() {
       this.hasDrew = false;
-      const { canvas2d } = this;
-      canvas2d.clearRect(
+      this.doErase(this.clip);
+      const { canvasTxt } = this;
+      canvasTxt.clearRect(
         0,
         0,
         this.$refs.canvasF.width,
@@ -353,8 +342,10 @@ export default {
   }
 };
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
+
 .can_vans {
+  position: relative;
   border: 1px solid #ddd;
   padding: 3px;
   canvas {

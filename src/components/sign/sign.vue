@@ -1,7 +1,10 @@
 <template>
   <div class="zm-sign">
     <div v-if="erasable" class="zm-sign-tool">
-      <span :class="['iconfont','icon-eraser', {'active': clip}]" @click="doErase(!clip)"></span>
+      <span
+        :class="['iconfont', 'icon-eraser', { active: clip }]"
+        @click="doErase(!clip)"
+      ></span>
     </div>
     <div class="can_vans">
       <canvas
@@ -21,10 +24,11 @@
   </div>
 </template>
 <script type="text/babel">
-import clip from "./clip"
+import clip from "./clip";
+import { touchEvent, getPointer } from "@/utils/utils";
 export default {
   name: "ZmSign",
-  mixins:[clip],
+  mixins: [clip],
   props: {
     canvasWidth: Number,
     canvasHeight: Number,
@@ -57,7 +61,6 @@ export default {
   data() {
     return {
       ImgSrc: "",
-      points: [],
       canvasTxt: null,
       w: "",
       h: "",
@@ -68,7 +71,7 @@ export default {
       isDraw: false, //签名标记
       hasDrew: false,
       isVertical: false,
-      clip: false,
+      clip: false
     };
   },
   watch: {
@@ -87,29 +90,30 @@ export default {
     this.resizeRender(true);
     // 在画板以外松开鼠标后冻结画笔
     document.onmouseup = () => {
-      this.isDraw = false;
+      this.closure();
     };
-    const { tapstart, tapend } = this.touchEvent();
+    const { tapstart, tapend } = touchEvent();
     document.addEventListener(tapend, this.closure);
     canvas.addEventListener(tapstart, this.drawStart, { passive: false });
     var evt = "onorientationchange" in window ? "orientationchange" : "resize";
     window.addEventListener(evt, this.resizeRender, false);
   },
   beforeDestoryed() {
-    const { tapend } = this.touchEvent();
-    document.removeEventListener(tapend, this.closure)
+    const { tapend } = touchEvent();
+    document.removeEventListener(tapend, this.closure);
     var evt = "onorientationchange" in window ? "orientationchange" : "resize";
     window.removeEventListener(evt, this.resizeRender, false);
   },
   methods: {
-    doErase(bool){
+    doErase(bool) {
       this.clip = bool;
       if (this.clip) {
-        this.initClip(this.canvas)
+        this.initClip(this.canvas);
       } else {
-        this.removeClip(this.canvas)
+        this.removeClip(this.canvas);
       }
     },
+    // 页面尺寸改变，主要用于手机旋转屏幕时调用
     resizeRender(init) {
       const orientation = window.orientation;
       const isVertical = orientation == 0 || orientation == 180;
@@ -127,110 +131,78 @@ export default {
         this.$emit("orientationchange", orientation);
       }
     },
+    // 垂直方向
     verticalCanvas(width, height) {
       this.w = width - 40;
       this.h = height / 2;
     },
+    // 水平方向
     horizontalCanvas(width, height) {
       this.w = width - 40;
       this.h = height - 120;
     },
-    touchEvent(){
-      const hastouch = "ontouchstart" in window ? true : false;
-      const tapstart = hastouch ? "touchstart" : "mousedown",
-        tapmove = hastouch ? "touchmove" : "mousemove",
-        tapend = hastouch ? "touchend" : "mouseup";
-      return {
-        tapstart,
-        tapmove,
-        tapend
-      }
-    },
-    getPoiner(e){
-      const hastouch = "ontouchstart" in window ? true : false;
-      console.log(e);
-      let x = hastouch ? e.targetTouches[0].pageX : e.offsetX;
-		  let y = hastouch ? e.targetTouches[0].pageY : e.offsetY;
-      if (hastouch) {
-        let ndom = this.canvas;
-        while(ndom.tagName!=="BODY"){
-          x -= ndom.offsetLeft;
-          y -= ndom.offsetTop;
-          ndom = ndom.offsetParent;
-        }
-      }
-      return {
-        x: x,
-        y: y
-      }
-    },
-    // 绘制
+    // 绘制开始
     drawStart(event) {
-      if(event.cancelable){
+      if (event.cancelable) {
         event.preventDefault();
       }
-      if(this.clip) return;
-      const obj = this.getPoiner(event);
-      this.isDraw = true;
-      this.hasDrew = true;
-      this.startX = obj.x;
-      this.startY = obj.y;
-      const { canvas, canvasTxt } = this;
-      canvasTxt.globalCompositeOperation = "source-over";
+      if (this.clip) return;
+      const obj = getPointer(event, this.canvas);
+      if (obj) {
+        this.isDraw = true;
+        this.hasDrew = true;
+        this.startX = obj.x;
+        this.startY = obj.y;
+        this.drawLine(obj, "source-over");
+      }
+      const { canvas } = this;
+      const { tapmove, tapend } = touchEvent();
+      canvas.addEventListener(tapmove, this.drawMove, { passive: false });
+      canvas.addEventListener(tapend, this.drawEnd, { passive: false });
+    },
+    // 鼠标移动
+    drawMove(event) {
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+      if (this.clip || !this.isDraw) return;
+      const obj = getPointer(event, this.canvas);
+      if (obj) {
+        this.drawLine(obj);
+        this.startY = obj.y;
+        this.startX = obj.x;
+      }
+    },
+    // 绘制结束
+    drawEnd(event) {
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+      if (this.clip) return;
+      const { canvas } = this;
+      const { tapmove, tapend } = touchEvent();
+      canvas.removeEventListener(tapmove, this.drawMove);
+      canvas.removeEventListener(tapend, this.drawEnd);
+    },
+    drawLine({ x, y }, globalCompositeOperation) {
+      const { canvasTxt } = this;
+      if (globalCompositeOperation) {
+        // 设置或返回如何将一个源（新的）图像绘制到目标（已有的）的图像上。
+        // 启用橡皮擦后会设置成destination-out，所以重新绘制时需要设置回默认值source-over
+        canvasTxt.globalCompositeOperation = globalCompositeOperation;
+      }
       canvasTxt.beginPath();
       canvasTxt.moveTo(this.startX, this.startY);
-      canvasTxt.lineTo(obj.x, obj.y);
-      canvasTxt.lineCap = "round";
-      canvasTxt.lineJoin = "round";
+      canvasTxt.lineTo(x, y);
+      canvasTxt.lineCap = "round"; // 设置或返回线条的结束端点样式。
+      canvasTxt.lineJoin = "round"; // 设置或返回两条线相交时，所创建的拐角类型。
       canvasTxt.strokeStyle = this.lineColor;
       canvasTxt.lineWidth = this.lineWidth;
       canvasTxt.stroke();
       canvasTxt.closePath();
-      this.points.push(obj);
-      const { tapmove, tapend } = this.touchEvent();
-      canvas.addEventListener(tapmove, this.drawMove, { passive: false });
-      canvas.addEventListener(tapend, this.drawEnd, { passive: false });
     },
-    drawMove(event) {
-      if(event.cancelable){
-        event.preventDefault();
-      }
-      if(this.clip || !this.isDraw) return;
-      const obj = this.getPoiner(event);
-      const { canvasTxt } = this;
-      canvasTxt.beginPath();
-      canvasTxt.moveTo(this.startX, this.startY);
-      canvasTxt.lineTo(obj.x, obj.y);
-      canvasTxt.lineWidth = this.lineWidth;
-      canvasTxt.lineCap = "round";
-      canvasTxt.lineJoin = "round";
-      canvasTxt.stroke();
-      canvasTxt.closePath();
-      this.startY = obj.y;
-      this.startX = obj.x;
-      this.points.push(obj);
-    },
-    drawEnd(event) {
-      if(event.cancelable){
-        event.preventDefault();
-      }
-      if(this.clip) return;
-      const obj = this.getPoiner(event)
-      const { canvas, canvasTxt } = this;
-      canvasTxt.beginPath();
-      canvasTxt.moveTo(this.startX, this.startY);
-      canvasTxt.lineTo(obj.x, obj.y);
-      canvasTxt.lineCap = "round";
-      canvasTxt.lineJoin = "round";
-      canvasTxt.stroke();
-      canvasTxt.closePath();
-      this.points.push(obj);
-      this.points.push({ x: -1, y: -1 });
-      const { tapmove, tapend } = this.touchEvent();
-      canvas.removeEventListener(tapmove, this.drawMove);
-      canvas.removeEventListener(tapend, this.drawEnd);
-    },
-    closure(){
+    // isDraw false冻结画笔
+    closure() {
       this.isDraw = false;
     },
     // 创建图片
@@ -274,12 +246,13 @@ export default {
       });
       return pm;
     },
+    // 计算画布中，有图像的区域坐标
     getCropArea(imgData) {
       const canvas = this.$refs.canvasF;
       var topX = canvas.width;
       var btmX = 0;
       var topY = canvas.height;
-      var btnY = 0;
+      var btmY = 0;
       for (var i = 0; i < canvas.width; i++) {
         for (var j = 0; j < canvas.height; j++) {
           var pos = (i + canvas.width * j) * 4;
@@ -289,7 +262,7 @@ export default {
             imgData[pos + 2] ||
             imgData[pos + 3] > 0
           ) {
-            btnY = Math.max(j, btnY);
+            btmY = Math.max(j, btmY);
             btmX = Math.max(i, btmX);
             topY = Math.min(j, topY);
             topX = Math.min(i, topX);
@@ -299,14 +272,15 @@ export default {
       topX++;
       btmX++;
       topY++;
-      btnY++;
-      const data = [topX, topY, btmX, btnY];
-      return data;
+      btmY++;
+      return [topX, topY, btmX, btmY];
     },
+    // 清空画布
     handleClear() {
       this.clear();
       this.$emit("on-clear");
     },
+    // 完成
     handleDone() {
       let canvas = this.$refs["canvasF"];
       const { beforeDone } = this;
@@ -321,6 +295,7 @@ export default {
         });
       }
     },
+    // 清空画布方法，供外部调用
     clear() {
       this.hasDrew = false;
       this.doErase(this.clip);
@@ -331,10 +306,10 @@ export default {
         this.$refs.canvasF.width,
         this.$refs.canvasF.height
       );
-      this.points = [];
       this.ImgSrc = "";
-      this.isDraw = false; //签名标记
+      this.closure();
     },
+    // 完成签名方法，供外部调用
     async done() {
       let ImgSrc = await this.createImage();
       return ImgSrc;
@@ -343,7 +318,6 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-
 .can_vans {
   position: relative;
   border: 1px solid #ddd;

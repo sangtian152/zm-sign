@@ -149,10 +149,15 @@ export default {
       if (this.clip) return;
       const obj = getPointer(event, this.canvas);
       if (obj) {
+        const { canvasTxt } = this;
         this.isDraw = true;
         this.hasDrew = true;
         this.startX = obj.x;
         this.startY = obj.y;
+        canvasTxt.lineCap = "round"; // 设置或返回线条的结束端点样式。
+        canvasTxt.lineJoin = "round"; // 设置或返回两条线相交时，所创建的拐角类型。
+        canvasTxt.strokeStyle = this.lineColor;
+        canvasTxt.lineWidth = this.lineWidth;
         this.drawLine(obj, "source-over");
       }
       const { canvas } = this;
@@ -194,10 +199,6 @@ export default {
       canvasTxt.beginPath();
       canvasTxt.moveTo(this.startX, this.startY);
       canvasTxt.lineTo(x, y);
-      canvasTxt.lineCap = "round"; // 设置或返回线条的结束端点样式。
-      canvasTxt.lineJoin = "round"; // 设置或返回两条线相交时，所创建的拐角类型。
-      canvasTxt.strokeStyle = this.lineColor;
-      canvasTxt.lineWidth = this.lineWidth;
       canvasTxt.stroke();
       canvasTxt.closePath();
     },

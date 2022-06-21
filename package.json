@@ -1,6 +1,6 @@
 {
   "name": "zm-sign",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "author": "zzh",
   "private": false,
   "main": "lib/zm-sign.common.js",

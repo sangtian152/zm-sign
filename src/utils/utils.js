@@ -23,7 +23,7 @@ export const getPointer = function(e, dom) {
     let y = hastouch ? e.targetTouches[0].pageY : e.offsetY;
     if (hastouch) {
       let ndom = dom;
-      while (ndom.tagName !== "BODY") {
+      while (ndom && ndom.tagName !== "BODY") {
         x -= ndom.offsetLeft;
         y -= ndom.offsetTop;
         ndom = ndom.offsetParent;

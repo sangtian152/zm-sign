@@ -240,6 +240,11 @@ export default {
           crop_ctx.fillStyle = this.imgBgColor;
           crop_ctx.fillRect(0, 0, crop_canvas.width, crop_canvas.height);
           resultImg = crop_canvas.toDataURL();
+          if (crop_canvas.width > 0 && crop_canvas.height > 0) {
+            resolve(resultImg);
+          } else {
+            reject(`Warning: Not Signned!`);
+          }
           crop_canvas = null;
         }
         this.doErase(this.clip);
@@ -293,6 +298,9 @@ export default {
         this.createImage().then(res => {
           this.ImgSrc = res;
           this.$emit("on-done", this.ImgSrc);
+        }).catch(() => {
+          this.ImgSrc = '';
+          this.$emit("on-done", '');
         });
       }
     },
